@@ -1,70 +1,87 @@
 package com.api.job.job.impl;
 
 import com.api.job.job.Job;
+import com.api.job.job.JobRepository;
 import com.api.job.job.JobService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class JobServiceImpl implements JobService {
 
-    private List<Job> jobs = new ArrayList<>();
+    //    private List<Job> jobs = new ArrayList<>();
+    JobRepository jobRepository;
     private Long nextId = 1L;
+
+    public JobServiceImpl(JobRepository jobRepository) {
+        this.jobRepository = jobRepository;
+    }
+
 
     @Override
     public Job getJobById(Long id) {
-        for (Job job: jobs){
-            if (job.getId().equals(id)){
-                return job;
-            }
-        }
-        return null;
+        return jobRepository.findById(id).orElse(null);
     }
 
     @Override
     public List<Job> findAll() {
-        return jobs;
+        return jobRepository.findAll();
     }
 
     @Override
     public void createJob(Job job) {
-        job.setId(nextId++);
-    jobs.add(job);
+       job.setId(nextId++);
+        jobRepository.save(job);
     }
 
     @Override
     public boolean deletebById(Long id) {
-        Iterator<Job> iterator = jobs.iterator();
-        while (iterator.hasNext()){
-            Job job = iterator.next();
-            if (job.getId().equals(id)) {
-                iterator.remove();
-                return true;
-            }
+        try {
+            jobRepository.deleteById(id);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
+    }
+
+   /* @Override
+    public boolean updateJob(Long id, Job updateJob) {
+        Optional<Job> jobOptional = jobRepository.findById(id);
+        if (jobOptional.isPresent()) {
+            Job job = jobOptional.get();
+            job.setTitle(updateJob.getTitle());
+            job.setDescription(updateJob.getDescription());
+            job.setMinSalary(updateJob.getMinSalary());
+            job.setMaxSalary(updateJob.getMaxSalary());
+            job.setLocation(updateJob.getLocation());
+            return true;
+        }
+
         return false;
     }
+**/
 
     @Override
     public boolean updateJob(Long id, Job updateJob) {
-        for (Job job : jobs){
-            if (job.getId().equals(id)){
-                job.setTitle(updateJob.getTitle());
-                job.setDescription(updateJob.getDescription());
-                job.setMinSalary(updateJob.getMinSalary());
-                job.setMaxSalary(updateJob.getMaxSalary());
-                job.setLocation(updateJob.getLocation());
-                return true;
-            }
+        Optional<Job> jobOptional = jobRepository.findById(id);
+        if (jobOptional.isPresent()) {
+            Job job = jobOptional.get();
+
+            // Update the entity fields
+            job.setTitle(updateJob.getTitle());
+            job.setDescription(updateJob.getDescription());
+            job.setMinSalary(updateJob.getMinSalary());
+            job.setMaxSalary(updateJob.getMaxSalary());
+            job.setLocation(updateJob.getLocation());
+
+            // Save the updated entity
+            jobRepository.save(job);  // This will update the job in the database
+
+            return true;
         }
         return false;
     }
